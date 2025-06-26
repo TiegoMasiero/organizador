@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Organizador de Tarefas</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+</head>
+
+<body>
+
+  <!-- Login -->
+  <div id="login-container">
+    <h2>Login</h2>
+    <input type="text" id="username" placeholder="Usuário" />
+    <input type="password" id="password" placeholder="Senha" />
+    <button onclick="login()">Entrar</button>
+    <p id="login-error" class="error"></p>
+  </div>
+
+  <!-- Área protegida -->
+  <div id="app" class="hidden">
+    <!-- Sidebar -->
+    <div id="sidebar">
+      <div class="sidebar-header">
+        <h2>Organizador</h2>
+        <h3>de Tarefas</h3>
+      </div>
+
+      <button class="new-task-btn" onclick="openModal()">Nova Tarefa</button>
+
+      <div class="user-profile">
+        <div class="avatar">
+          <img id="user-avatar" src="" alt="Avatar do usuário" style="cursor: pointer" />
+        </div>
+        <div class="username">
+          <span id="current-user-name">Usuário</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="content-container"></div>
+    <!-- Cabeçalho -->
+    <header>
+      <h1>Solicitações de criação</h1>
+      <button onclick="logout()">Sair</button>
+    </header>
+
+    <!-- Quadro Kanban -->
+    <main id="kanban-board">
+      <div class="column" ondragover="allowDrop(event)" ondrop="drop(event)">
+        <h3>
+          Solicitado (<span class="task-count" data-column="solicitado">0</span>)
+        </h3>
+        <div class="task-list" id="solicitado"></div>
+      </div>
+      <div class="column" ondragover="allowDrop(event)" ondrop="drop(event)">
+        <h3>
+          Briefing (<span class="task-count" data-column="briefing">0</span>)
+        </h3>
+        <div class="task-list" id="briefing"></div>
+      </div>
+      <div class="column" ondragover="allowDrop(event)" ondrop="drop(event)">
+        <h3>
+          Em andamento (<span class="task-count" data-column="andamento">0</span>)
+        </h3>
+        <div class="task-list" id="andamento"></div>
+      </div>
+      <div class="column" ondragover="allowDrop(event)" ondrop="drop(event)">
+        <h3>
+          Aprovação (<span class="task-count" data-column="aprovacao">0</span>)
+        </h3>
+        <div class="task-list" id="aprovacao"></div>
+      </div>
+      <div class="column" ondragover="allowDrop(event)" ondrop="drop(event)">
+        <h3>
+          Concluído (<span class="task-count" data-column="concluido">0</span>)
+        </h3>
+        <div class="task-list" id="concluido"></div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal criação -->
+  <div id="modal" class="modal hidden">
+    <div class="modal-content">
+      <h2>Nova Tarefa</h2>
+      <input type="text" id="task-title" placeholder="Título" />
+      <input type="text" id="task-client" placeholder="Cliente" />
+      <textarea id="task-desc" placeholder="Descrição da tarefa"></textarea>
+      <input type="file" id="task-file" />
+      <select id="task-column">
+        <option value="solicitado">Solicitado</option>
+        <option value="briefing">Briefing</option>
+        <option value="andamento">Em andamento</option>
+        <option value="aprovacao">Aprovação</option>
+        <option value="concluido">Concluído</option>
+      </select>
+      <div class="modal-actions">
+        <button id="save-task-btn">Salvar</button>
+        <button onclick="closeModal()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal edição -->
+  <div id="edit-modal" class="modal hidden">
+    <div class="modal-content">
+      <div class="top-bar">
+        <h2>Editar Tarefa</h2>
+        <i id="edit-urgency-toggle" class="fa-solid fa-flag" title="Urgente"></i>
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label for="edit-title">Nome da tarefa</label>
+          <input type="text" id="edit-title" />
+        </div>
+        <div class="field">
+          <label for="edit-client">Nome do cliente</label>
+          <input type="text" id="edit-client" />
+        </div>
+      </div>
+
+      <div class="field full">
+        <label for="edit-desc">Descrição</label>
+        <textarea id="edit-desc"></textarea>
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label for="edit-file">Arquivo (opcional)</label>
+          <input type="file" id="edit-file" />
+        </div>
+        <div class="field">
+          <label for="edit-column">Etapa atual</label>
+          <select id="edit-column">
+            <option value="solicitado">Solicitado</option>
+            <option value="briefing">Briefing</option>
+            <option value="andamento">Em andamento</option>
+            <option value="aprovacao">Aprovação</option>
+            <option value="concluido">Concluído</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field full">
+        <label for="edit-notes">Observações</label>
+        <textarea id="edit-notes" placeholder="Escreva uma anotação..."></textarea>
+      </div>
+
+      <div class="modal-actions">
+        <button id="save-edit-btn">Salvar</button>
+        <button onclick="closeEditModal()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pop-up Perfil Usuário -->
+  <div id="user-popup" class="modal hidden">
+    <div class="modal-content" id="user-panel">
+      <h2>Perfil do Usuário</h2>
+
+      <div class="user-profile-edit">
+        <div class="avatar-preview">
+          <img id="user-avatar-preview" src="" alt="Avatar" />
+          <input type="file" id="user-photo-input" />
+          <label for="user-photo-input" class="edit-avatar-btn">Alterar Foto</label>
+        </div>
+        <div class="username-edit">
+          <label for="edit-username">Nome:</label>
+          <input type="text" id="edit-username" />
+        </div>
+      </div>
+
+      <div id="admin-user-controls" class="hidden">
+        <h3>Usuários cadastrados</h3>
+        <ul id="user-list"></ul>
+        <button onclick="showCreateUserForm()">+ Novo Usuário</button>
+      </div>
+
+      <div class="modal-actions">
+        <button onclick="saveProfile()">Salvar Perfil</button>
+        <button onclick="closeUserPopup()">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal usuário -->
+  <div id="user-form-modal" class="modal hidden">
+    <div class="modal-content">
+      <h2 id="user-form-title">Novo Usuário</h2>
+      <input type="text" id="form-username" placeholder="Nome de usuário" />
+      <input type="password" id="form-password" placeholder="Senha" />
+      <select id="form-role">
+        <option value="member">Membro</option>
+        <option value="admin">Administrador</option>
+      </select>
+      <div class="modal-actions">
+        <button id="save-user-btn">Salvar</button>
+        <button onclick="closeUserFormModal()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rodapé -->
+  <footer>
+    <p>created by | <span class="green">Tiego Masiero</span></p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+
+</html>
